@@ -1,0 +1,18 @@
+# Python
+**/venv/
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+
+# Node
+**/node_modules/
+
+# Keep frontend/dist (needed by the image) but drop sources
+frontend/src/
+frontend/public/
+
+# Data / local
+data/
+*.log
+.git/
+.DS_Store
