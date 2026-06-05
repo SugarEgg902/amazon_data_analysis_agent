@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   DashboardOutlined, UnorderedListOutlined, SwapOutlined,
-  RiseOutlined, AlertOutlined, FileTextOutlined, BarChartOutlined,
+  RiseOutlined, AlertOutlined, FileTextOutlined, BarChartOutlined, SearchOutlined,
 } from '@ant-design/icons'
 import { api, unwrap } from '../api/client'
 import { useMarket } from '../context/MarketContext'
@@ -18,6 +18,7 @@ const items = [
   { key: '/anomalies', icon: <AlertOutlined />, label: '异常检测' },
   { key: '/reports', icon: <FileTextOutlined />, label: '每日报告' },
   { key: '/sales-analysis', icon: <BarChartOutlined />, label: '销售分析' },
+  { key: '/search', icon: <SearchOutlined />, label: 'Amazon搜索' },
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {

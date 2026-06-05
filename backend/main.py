@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from backend.scheduler import start_scheduler
 from backend.routers import (meta, overview, brands, products, compare, trends,
-                             anomalies, reports, sales_analysis)
+                             anomalies, reports, sales_analysis, search)
 
 logging.basicConfig(level=logging.INFO)
 scheduler = None
@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Amazon Analytics", lifespan=lifespan)
 
 for r in (meta, overview, brands, products, compare, trends,
-          anomalies, reports, sales_analysis):
+          anomalies, reports, sales_analysis, search):
     app.include_router(r.router, prefix="/api")
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")

@@ -38,6 +38,12 @@ const THEMES: Record<string, BrandTheme> = {
     gradient: 'linear-gradient(135deg, #08979c 0%, #5cdbd3 100%)',
     intro: '三防与潮流外观并重,机型迭代快',
   },
+  fossibot: {
+    name: 'Fossibot',
+    color: '#722ed1',
+    gradient: 'linear-gradient(135deg, #531dab 0%, #b37feb 100%)',
+    intro: '户外三防手机新锐品牌,主打大电池与坚固耐用',
+  },
 }
 
 const FALLBACK: BrandTheme = {

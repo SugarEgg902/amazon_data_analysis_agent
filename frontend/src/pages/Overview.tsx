@@ -67,16 +67,14 @@ export default function Overview() {
                       valueStyle={{ color: t.color, fontSize: 20 }} /></Col>
                     <Col span={12}><Statistic title="月营收" value={Number(b.total_revenue)}
                       precision={0} prefix="$" valueStyle={{ fontSize: 20 }} /></Col>
-                    <Col span={8}><Statistic title="均价" value={Number(b.avg_price)} precision={0} prefix="$"
+                    <Col span={12}><Statistic title="均价" value={Number(b.avg_price)} precision={0} prefix="$"
                       valueStyle={{ fontSize: 15 }} /></Col>
-                    <Col span={8}>
+                    <Col span={12}>
                       <Tooltip title="平均评分">
                         <Statistic title="评分" value={Number(b.avg_rating)} precision={2}
                           valueStyle={{ fontSize: 15 }} />
                       </Tooltip>
                     </Col>
-                    <Col span={8}><Statistic title="毛利率" value={Number(b.avg_gross_margin) * 100}
-                      precision={0} suffix="%" valueStyle={{ fontSize: 15 }} /></Col>
                   </Row>
                 </div>
               </Card>

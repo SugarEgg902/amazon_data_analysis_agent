@@ -11,6 +11,7 @@ import Trends from './pages/Trends'
 import Anomalies from './pages/Anomalies'
 import Reports from './pages/Reports'
 import SalesAnalysis from './pages/SalesAnalysis'
+import AmazonSearch from './pages/AmazonSearch'
 
 const qc = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false } },
@@ -33,6 +34,7 @@ export default function App() {
                 <Route path="/anomalies" element={<Anomalies />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/sales-analysis" element={<SalesAnalysis />} />
+                <Route path="/search" element={<AmazonSearch />} />
               </Routes>
             </ErrorBoundary>
           </Layout>

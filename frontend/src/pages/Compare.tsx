@@ -26,7 +26,6 @@ export default function Compare() {
       sorter: (a: any, b: any) => a.total_monthly_sales - b.total_monthly_sales },
     { title: '月营收', dataIndex: 'total_revenue', render: (v: any) => `$${Number(v).toFixed(0)}` },
     { title: '均价', dataIndex: 'avg_price', render: (v: any) => `$${Number(v).toFixed(2)}` },
-    { title: '毛利率', dataIndex: 'avg_gross_margin', render: (v: any) => `${(Number(v) * 100).toFixed(0)}%` },
     { title: 'FBA占比', dataIndex: 'fba_ratio', render: (v: any) => `${(Number(v) * 100).toFixed(0)}%` },
   ]
 
@@ -46,8 +45,7 @@ export default function Compare() {
         <Table rowKey={(r) => r.brand} columns={brandCols as any}
           dataSource={data.brands ?? []} pagination={false} size="middle" scroll={{ x: 900 }} />
       </Card>
-      {/* 第一行:OUKITEL(我们的产品) + 一个竞品,各占一半 */}
-      {/* 第二行:剩余三个竞品 */}
+      {/* 品牌卡片:每行3个 */}
       {(() => {
         const entries = Object.entries(topProducts)
         // OUKITEL 置顶
@@ -56,8 +54,10 @@ export default function Compare() {
           const bo = b.toUpperCase() === 'OUKITEL' ? 0 : 1
           return ao - bo
         })
-        const row1 = entries.slice(0, 2)
-        const row2 = entries.slice(2)
+        const rows: [string, any[]][][] = []
+        for (let i = 0; i < entries.length; i += 3) {
+          rows.push(entries.slice(i, i + 3))
+        }
         const renderCard = ([brand, products]: [string, any[]]) => {
           const t = brandTheme(brand)
           return (
@@ -74,12 +74,11 @@ export default function Compare() {
         }
         return (
           <>
-            <div style={{ display: 'flex', gap: 20, marginBottom: 20 }}>
-              {row1.map(renderCard)}
-            </div>
-            <div style={{ display: 'flex', gap: 20 }}>
-              {row2.map(renderCard)}
-            </div>
+            {rows.map((row, i) => (
+              <div key={i} style={{ display: 'flex', gap: 20, marginBottom: 20 }}>
+                {row.map(renderCard)}
+              </div>
+            ))}
           </>
         )
       })()}

@@ -49,9 +49,6 @@ export default function ProductDetail() {
             <Descriptions.Item label="配送方式">{data?.fulfillment_method}</Descriptions.Item>
             <Descriptions.Item label="卖家产地">{data?.seller_location}</Descriptions.Item>
             <Descriptions.Item label="BuyBox卖家">{data?.buybox_seller || '-'}</Descriptions.Item>
-            <Descriptions.Item label="毛利率">
-              {data?.gross_margin != null ? `${(Number(data.gross_margin) * 100).toFixed(0)}%` : '-'}
-            </Descriptions.Item>
             <Descriptions.Item label="上架日期">{data?.launch_date || '-'}</Descriptions.Item>
             <Descriptions.Item label="在售天数">{data?.days_on_market || '-'}</Descriptions.Item>
             <Descriptions.Item label="重量/尺寸" span={2}>
