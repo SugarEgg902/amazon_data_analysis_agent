@@ -1,0 +1,132 @@
+brand	model	type
+Blackview	Active 5	平板
+Blackview	Active 7	平板
+Blackview	Active 8 Pro	平板
+Blackview	Active 10 Pro	平板
+Blackview	Active 12 Pro	平板
+Blackview	A200 Pro	手机
+Blackview	A52PRO	手机
+Blackview	A55 Pro	手机
+Blackview	A60 Pro	手机
+Blackview	A70 Pro	手机
+Blackview	A80	手机
+Blackview	A95	手机
+Blackview	BL7000	手机
+Blackview	BL8800	手机
+Blackview	BL9000 / BL9000 Pro	手机
+Blackview	BV4800 Pro / SE	手机
+Blackview	BV4900 Pro	手机
+Blackview	BV5300 Plus / Pro	手机
+Blackview	BV5500 Pro	手机
+Blackview	BV6200 Plus / Pro	手机
+Blackview	BV6300 Pro	手机
+Blackview	BV6600E	手机
+Blackview	BV7100 / BV7200 / BV7300	手机
+Blackview	BV8100 / BV8200	手机
+Blackview	BV8900 / BV8900Pro	手机
+Blackview	BV9200 / BV9300	手机
+Blackview	Color 6 / Color 8	手机
+Blackview	Fort 1 / 2 / 5	手机
+Blackview	HERO 10	手机
+Blackview	Link 1 Kids	平板
+Blackview	Link 2	平板
+Blackview	Link 8	平板
+Blackview	MEGA 2	平板
+Blackview	MEGA 3	平板
+Blackview	MEGA 8	平板
+Blackview	N6000	手机
+Blackview	Rock 1 / 2 / 3 / 5	手机
+Blackview	Shark 6 / 8 / 9	手机
+Blackview	Tab 3 Kids	平板
+Blackview	Tab 5	平板
+Blackview	Tab 6 Kids	平板
+Blackview	Tab 11 WiFi	平板
+Blackview	Tab 16 / Tab 16 Pro	平板
+Blackview	Tab 20 Kids / WiFi	平板
+Blackview	Tab 60 / Tab 60 Pro	平板
+Blackview	Tab 70 WiFi	平板
+Blackview	Tab 80	平板
+Blackview	Tab 9	平板
+Blackview	Tab 90	平板
+Blackview	Tab A6 Kids	平板
+Blackview	Wave 6C / 7C / 8C / 9C	手机
+Blackview	Wave 10 / 10C	手机
+Blackview	Xplore 1 / 1 Pro / 2	手机
+Blackview	Zeno 1 / 10	平板
+Cubot	Kingkong 9 / 11	手机
+Cubot	Kingkong Ace 2	手机
+Cubot	Kingkong Power 5	手机
+Cubot	Kingkong Star 2	手机
+Cubot	Tab 70	平板
+Doogee	A9	手机
+Doogee	Blade 10 Energy / MAX / Pro	手机
+Doogee	Blade GT 5G	手机
+Doogee	Blade10 Ultra	手机
+Doogee	Fire 6 / Fire3 Pro	手机
+Doogee	N30	手机
+Doogee	Note 56 / 56 Plus / 58 Pro / Note56X Pro	手机
+Doogee	S60 / S96 PRO / S98 / S98 Pro / S99	手机
+Doogee	S100 / S110 / S118 Pro / S200X	手机
+Doogee	T20 Ultra / T20mini / T30 Pro / T36	平板
+Doogee	Tab A9 / A9 Pro / E3 Plus / E3 Pro / G6	平板
+Doogee	U9 / U11 / U11 Pro / U12	平板
+Doogee	V20 / V40 / VMAX Plus	手机
+Fossibot	DT1 Lite	平板
+Fossibot	DT2	平板
+Fossibot	DT3	平板
+Fossibot	F101 Pro / F101P	手机
+Fossibot	F106 Pro	手机
+Fossibot	F107 Pro	手机
+Fossibot	F109	手机
+Fossibot	F110 Pro / F110L / F110Pro	手机
+Fossibot	F112 Pro	手机
+Fossibot	F113	手机
+Fossibot	F114	手机
+Oukitel	C21 PRO / C3 / C62 / C68 / C69	手机
+Oukitel	G1	手机
+Oukitel	OT5	平板
+Oukitel	RT3 / RT3 Pro	平板
+Oukitel	RT6	平板
+Oukitel	RT7 / RT7 5G	平板
+Oukitel	RT8	平板
+Oukitel	RT9	平板
+Oukitel	WP16 / WP17 / WP18	手机
+Oukitel	WP20 PRO	手机
+Oukitel	WP39 Pro	手机
+Oukitel	WP60	手机
+Ulefone	Armor 12 / 12S	手机
+Ulefone	Armor 16 Pro	手机
+Ulefone	Armor 21 / 22 / 22 Pro	手机
+Ulefone	Armor 23 Ultra	手机
+Ulefone	Armor 24	手机
+Ulefone	Armor 25T / 25T Pro	手机
+Ulefone	Armor 26 Ultra	手机
+Ulefone	Armor 27 / 27 Pro / 27T / 27T Pro	手机
+Ulefone	Armor 28 Pro / 28 Ultra	手机
+Ulefone	Armor 29 Pro / 29 Ultra	手机
+Ulefone	Armor 30 / 30 Pro	手机
+Ulefone	Armor 33 / 33 Pro	手机
+Ulefone	Armor 34 / 34 Pro / 34 Plus	手机
+Ulefone	Armor 9E	手机
+Ulefone	Armor Mini 20 / 20 Pro / 20T Pro / Mini 3	手机
+Ulefone	Armor Pad 2 / Pad 3 Pro / Pad 4 Ultra	平板
+Ulefone	Armor Pad 4T Ultra / Pad 5 Pro / Pad 5 Ultra	平板
+Ulefone	Armor Pad Pro	平板
+Ulefone	Armor X11 Pro / X12 / X12 Pro	手机
+Ulefone	Armor X13	手机
+Ulefone	Armor X16 / X16 Pro	手机
+Ulefone	Armor X31 / X31 Pro	手机
+Ulefone	Armor X32 / X32 Pro	手机
+Ulefone	Armor X5	手机
+Ulefone	Note 10 / 12 / 14 / 15	手机
+Ulefone	Note 16 Pro	手机
+Ulefone	Note 17 Pro / 18 Pro / 18 Ultra	手机
+Ulefone	Note 19 / 20 Pro / 21 / 22	手机
+Ulefone	Note 8P / 9P	手机
+Ulefone	Power Armor 13 / 14 / 14 Pro	手机
+Ulefone	Power Armor 16S	手机
+Ulefone	Power Armor 18 Ultra / 18T	手机
+Ulefone	Power Armor 19 / 23 Ultra / 24	手机
+Ulefone	RugKing 2 Pro / 3 Pro / 4 Pro / 5 Pro	手机
+Ulefone	RugKing Pad 2 Pro	平板
+Ulefone	Tab A10 / A9 Pro / W10	平板

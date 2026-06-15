@@ -12,7 +12,7 @@ router = APIRouter()
 def get_markets():
     with engine.connect() as conn:
         rows = conn.execute(text(
-            "SELECT DISTINCT market FROM amazon WHERE market IS NOT NULL ORDER BY market"
+            "SELECT DISTINCT market FROM daily_brand_summary WHERE market IS NOT NULL ORDER BY market"
         ))
         return ApiResponse(data=[r[0] for r in rows])
 

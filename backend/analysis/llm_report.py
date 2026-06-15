@@ -40,7 +40,7 @@ def _build_prompt(today_rows, prev_rows, cat_rows, d):
         return "\n".join(
             f"- {r['brand']}（覆盖站点 {r['markets']}）: 商品{r['product_count']} 总营收{r['total_revenue']} "
             f"总月销{r['total_monthly_sales']} 均价{r['avg_price']} 评分{r['avg_rating']} "
-            f"增长{r['avg_growth_rate']} 毛利{r['avg_gross_margin']} FBA占比{r['fba_ratio']}"
+            f"增长{r['avg_growth_rate']} FBA占比{r['fba_ratio']}"
             for r in rows) or "（无数据）"
     cat = "\n".join(
         f"- {r['sub_category']}: 营收{r['revenue']}" for r in cat_rows
@@ -57,7 +57,7 @@ def _build_prompt(today_rows, prev_rows, cat_rows, d):
 ## 三、热门品类（五品牌全站点按营收）
 {cat}
 
-请用 Markdown 输出，包含三部分：品牌整体表现、竞品对比（指出五品牌中增长最快/最慢的及原因）、选品建议（增长品类与机会点）。包含标题、要点列表和简要结论。"""
+请用 Markdown 输出，包含三部分：品牌整体表现、竞品对比（指出五品牌中增长最快/最慢的及原因）、选品建议（增长品类与机会点）。包含标题、要点列表和简要结论。注意：不要包含毛利率相关数据。"""
 
 
 def run_llm_analysis(target_date: date) -> None:

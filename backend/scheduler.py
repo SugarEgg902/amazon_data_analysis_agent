@@ -6,6 +6,7 @@ from backend.aggregation.brand_summary import run_brand_summary
 from backend.aggregation.category_summary import run_category_summary
 from backend.aggregation.product_snapshot import run_product_snapshot
 from backend.aggregation.overview_summary import run_overview_summary
+from backend.aggregation.model_summary import run_model_summary
 from backend.analysis.llm_report import run_llm_analysis
 from sqlalchemy import text
 from backend.database import engine
@@ -20,6 +21,7 @@ def run_daily_aggregation():
         ("brand_summary", run_brand_summary),
         ("category_summary", run_category_summary),
         ("overview_summary", run_overview_summary),
+        ("model_summary", run_model_summary),
     ):
         try:
             fn(today)

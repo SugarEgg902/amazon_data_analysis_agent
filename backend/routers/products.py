@@ -1,7 +1,7 @@
 # backend/routers/products.py
 from fastapi import APIRouter, Query, HTTPException
 from sqlalchemy import text
-from typing import Optional
+from typing import Optional, List
 from backend.database import engine
 from backend.models.schemas import ApiResponse
 
@@ -24,7 +24,7 @@ def list_products(
     page_size: int = Query(default=20, ge=1, le=100),
     market: Optional[str] = None,
     brand: Optional[str] = None,
-    category: Optional[str] = None,
+    category: Optional[List[str]] = Query(default=None),
     q: Optional[str] = Query(default=None, description="按品牌/商品名/ASIN模糊搜索"),
     date: Optional[str] = Query(default=None, description="快照日期,默认最新"),
     sort: str = Query(default="monthly_sales"),
@@ -40,17 +40,19 @@ def list_products(
         ).scalar()
         if target is None:
             return ApiResponse(data={"items": [], "total": 0, "page": page,
-                                     "page_size": page_size, "date": None})
+                                     "page_size": page_size, "date": None, "summary": None})
         params["d"] = target
 
-        # 元信息按 (asin,market) 去重为一行,JOIN 不会放大行数 —— 修复分页错位
         filters = ["s.snapshot_date = :d"]
         if market:
             filters.append("s.market = :market"); params["market"] = market
         if brand:
             filters.append("LOWER(s.brand) = LOWER(:brand)"); params["brand"] = brand
         if category:
-            filters.append("s.sub_category = :category"); params["category"] = category
+            placeholders = ", ".join(f":cat_{i}" for i in range(len(category)))
+            filters.append(f"s.sub_category IN ({placeholders})")
+            for i, c in enumerate(category):
+                params[f"cat_{i}"] = c
         if q:
             filters.append("(s.brand LIKE :q OR s.asin LIKE :q OR m.product_title LIKE :q)")
             params["q"] = f"%{q}%"
@@ -71,6 +73,13 @@ def list_products(
         """
 
         total = conn.execute(text(f"SELECT COUNT(*) {base}"), params).scalar()
+        summary = conn.execute(text(f"""
+            SELECT SUM(s.monthly_sales) AS total_sales,
+                   SUM(s.monthly_revenue) AS total_revenue,
+                   COUNT(*) AS product_count,
+                   AVG(s.price) AS avg_price
+            {base}
+        """), params).mappings().first()
         rows = conn.execute(text(f"""
             SELECT s.asin, s.market, s.brand, s.sub_category, s.price,
                    s.monthly_sales, s.monthly_revenue, s.main_bsr, s.sub_bsr,
@@ -81,8 +90,11 @@ def list_products(
             LIMIT :limit OFFSET :offset
         """), params).mappings().all()
 
-    return ApiResponse(data={"items": [dict(r) for r in rows], "total": total,
-                             "page": page, "page_size": page_size, "date": str(target)})
+    return ApiResponse(data={
+        "items": [dict(r) for r in rows], "total": total,
+        "page": page, "page_size": page_size, "date": str(target),
+        "summary": dict(summary) if summary else None,
+    })
 
 
 @router.get("/products/{asin}", response_model=ApiResponse)

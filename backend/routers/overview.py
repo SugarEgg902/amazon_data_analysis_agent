@@ -4,30 +4,39 @@ from sqlalchemy import text
 from typing import Optional
 from backend.database import engine
 from backend.models.schemas import ApiResponse
-from backend.constants import canonical_brand
+from backend.constants import canonical_brand, focus_brand_sql_list
 
 router = APIRouter()
+
+_FOCUS = focus_brand_sql_list()
 
 
 @router.get("/overview", response_model=ApiResponse)
 def get_overview(date: Optional[str] = Query(default=None),
                  market: Optional[str] = Query(default=None)):
-    # 读取预聚合表 daily_overview_summary(每日定时生成,已按变体去重+手机过滤+USD折算)
     with engine.connect() as conn:
         target = date or conn.execute(
-            text("SELECT MAX(data_date) FROM daily_overview_summary")
+            text("SELECT MAX(data_date) FROM daily_brand_summary")
         ).scalar()
         if target is None:
-            return ApiResponse(data={"date": None, "category": "手机",
+            return ApiResponse(data={"date": None, "category": "全品类",
                                      "brands": [], "category_share": []})
 
-        rows = conn.execute(text("""
-            SELECT brand, markets, product_count, total_revenue,
-                   total_monthly_sales, avg_price, avg_rating,
-                   avg_growth_rate, avg_gross_margin, fba_ratio
-            FROM daily_overview_summary
-            WHERE data_date = :d
-            ORDER BY total_revenue DESC
+        # 全品类汇总（从 daily_brand_summary 按品牌聚合所有站点）
+        rows = conn.execute(text(f"""
+            SELECT brand,
+                   GROUP_CONCAT(DISTINCT market ORDER BY market) AS markets,
+                   SUM(product_count) AS product_count,
+                   SUM(total_revenue) AS total_revenue,
+                   SUM(total_monthly_sales) AS total_monthly_sales,
+                   AVG(avg_price) AS avg_price,
+                   AVG(avg_rating) AS avg_rating,
+                   AVG(avg_growth_rate) AS avg_growth_rate,
+                   AVG(fba_ratio) AS fba_ratio
+            FROM daily_brand_summary
+            WHERE data_date = :d AND LOWER(brand) IN ({_FOCUS})
+            GROUP BY brand
+            ORDER BY SUM(total_revenue) DESC
         """), {"d": target}).mappings().all()
 
         cats = conn.execute(text("""
@@ -45,7 +54,7 @@ def get_overview(date: Optional[str] = Query(default=None),
 
     return ApiResponse(data={
         "date": str(target),
-        "category": "手机（全站点合并）",
+        "category": "全品类（全站点合并）",
         "brands": brand_rows,
         "category_share": [dict(r) for r in cats],
     })

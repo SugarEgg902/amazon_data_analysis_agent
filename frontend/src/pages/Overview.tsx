@@ -1,19 +1,33 @@
-import { Row, Col, Card, Statistic, Spin, Alert, Empty, Tag, Tooltip } from 'antd'
+import { Row, Col, Card, Statistic, Spin, Alert, Empty, Tag, Tooltip, DatePicker, Segmented } from 'antd'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import dayjs from 'dayjs'
 import { api, unwrap } from '../api/client'
 import { brandTheme } from '../theme/brands'
 import TrendChart from '../components/TrendChart'
 import PieChart from '../components/PieChart'
 
+const TREND_OPTIONS = [
+  { label: '7天', value: 7 },
+  { label: '30天', value: 30 },
+  { label: '90天', value: 90 },
+  { label: '半年', value: 180 },
+  { label: '一年', value: 365 },
+]
+
 export default function Overview() {
-  // 市场概览只按品牌聚类、跨所有站点合并,刻意不跟随顶部站点开关
+  const navigate = useNavigate()
+  const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined)
+  const [trendDays, setTrendDays] = useState<number>(30)
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ['overview'],
-    queryFn: () => unwrap<any>(api.get('/overview')),
+    queryKey: ['overview', selectedDate],
+    queryFn: () => unwrap<any>(api.get('/overview', { params: selectedDate ? { date: selectedDate } : {} })),
   })
   const { data: trend } = useQuery({
-    queryKey: ['brands-trend'],
-    queryFn: () => unwrap<any>(api.get('/brands/trend', { params: { days: 30 } })),
+    queryKey: ['brands-trend', trendDays],
+    queryFn: () => unwrap<any>(api.get('/brands/trend', { params: { days: trendDays } })),
   })
 
   if (isLoading) return <Spin size="large" style={{ display: 'block', margin: '80px auto' }} />
@@ -35,18 +49,31 @@ export default function Overview() {
       <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: 16, fontWeight: 600 }}>市场概览</span>
         <Tag color="geekblue">类别: {data.category}</Tag>
-        <span style={{ color: '#999', fontSize: 12 }}>按品牌聚类 · 全站点合并 · {data.date}</span>
+        <DatePicker
+          allowClear
+          value={selectedDate ? dayjs(selectedDate) : undefined}
+          onChange={(d) => setSelectedDate(d ? d.format('YYYY-MM-DD') : undefined)}
+          placeholder="选择日期"
+          size="small"
+        />
+        <span style={{ color: '#999', fontSize: 12 }}>
+          {selectedDate ? `查看: ${selectedDate}` : `最新: ${data.date}`}
+        </span>
       </div>
-      <div style={{ display: 'flex', gap: 20, overflowX: 'auto', paddingBottom: 12,
-                    marginBottom: 20, scrollSnapType: 'x mandatory' }}>
+      <div className="brand-cards-scroll"
+        style={{ display: 'flex', gap: 20, overflowX: 'auto', overflowY: 'visible',
+                 paddingBottom: 12, paddingTop: 8,
+                 marginBottom: 20, scrollSnapType: 'x mandatory' }}>
         {brands.map((b: any) => {
           const t = brandTheme(b.brand)
           return (
             <div key={b.brand} style={{ flex: '0 0 320px', scrollSnapAlign: 'start' }}>
               <Card
                 hoverable bordered={false}
+                className="brand-card-hover"
+                onClick={() => navigate(`/brands/${b.brand}`)}
                 styles={{ body: { padding: 0 } }}
-                style={{ borderRadius: 14, overflow: 'hidden',
+                style={{ borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
                          boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
               >
                 <div style={{ background: t.gradient, padding: '18px 20px', color: '#fff' }}>
@@ -84,7 +111,19 @@ export default function Overview() {
       </div>
       <Row gutter={[20, 20]}>
         <Col xs={24} lg={14}>
-          <Card title="30天月销量趋势" bordered={false} style={{ borderRadius: 14 }}>
+          <Card
+            title={
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>月销量趋势</span>
+                <Segmented
+                  size="small"
+                  options={TREND_OPTIONS}
+                  value={trendDays}
+                  onChange={(v) => setTrendDays(v as number)}
+                />
+              </div>
+            }
+            bordered={false} style={{ borderRadius: 14 }}>
             {trend && <TrendChart dates={trend.dates} series={trend.series}
               colors={Object.fromEntries(
                 Object.keys(trend.series).map((b: string) => [b, brandTheme(b).color])

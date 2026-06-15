@@ -1,4 +1,4 @@
-import { Table, Select, Row, Col, Image, Tag, Input, DatePicker } from 'antd'
+import { Table, Select, Row, Col, Image, Tag, Input, DatePicker, Statistic, Card } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
@@ -12,7 +12,7 @@ export default function ProductList() {
   const { market } = useMarket()
   const [page, setPage] = useState(1)
   const [brand, setBrand] = useState<string>()
-  const [category, setCategory] = useState<string>()
+  const [categories, setCategories] = useState<string[]>([])
   const [q, setQ] = useState<string>()
   const [date, setDate] = useState<Dayjs | null>(null)
   const [sort, setSort] = useState('monthly_sales')
@@ -28,11 +28,14 @@ export default function ProductList() {
     queryFn: () => unwrap<string[]>(api.get('/meta/categories', { params: { market } })),
   })
   const { data, isLoading } = useQuery({
-    queryKey: ['products', market, page, brand, category, q, dateStr, sort],
+    queryKey: ['products', market, page, brand, categories, q, dateStr, sort],
     queryFn: () => unwrap<any>(api.get('/products', {
-      params: { page, page_size: 20, market, brand, category, q, date: dateStr, sort },
+      params: { page, page_size: 20, market, brand, category: categories.length ? categories : undefined, q, date: dateStr, sort },
+      paramsSerializer: { indexes: null },
     })),
   })
+
+  const summary = data?.summary
 
   const columns = [
     { title: '图片', dataIndex: 'main_image', width: 64,
@@ -63,9 +66,11 @@ export default function ProductList() {
         <Col><Select allowClear placeholder="品牌" style={{ width: 150 }} value={brand}
           onChange={(v) => { setBrand(v); setPage(1) }}
           options={(brands ?? []).map((b) => ({ value: b, label: b }))} showSearch /></Col>
-        <Col><Select allowClear placeholder="品类" style={{ width: 200 }} value={category}
-          onChange={(v) => { setCategory(v); setPage(1) }}
-          options={(cats ?? []).map((c) => ({ value: c, label: c }))} showSearch /></Col>
+        <Col><Select allowClear placeholder="品类" mode="multiple" style={{ minWidth: 200, maxWidth: 400 }}
+          value={categories}
+          onChange={(v) => { setCategories(v); setPage(1) }}
+          options={(cats ?? []).map((c) => ({ value: c, label: c }))} showSearch
+          maxTagCount={2} /></Col>
         <Col><DatePicker placeholder="快照日期" value={date} style={{ width: 150 }}
           onChange={(d) => { setDate(d); setPage(1) }}
           disabledDate={(d) => d && d > dayjs()} /></Col>
@@ -78,6 +83,30 @@ export default function ProductList() {
           { value: 'growth_rate', label: '增长率' },
         ]} /></Col>
       </Row>
+      {summary && (
+        <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+          <div style={{ flex: 1, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: 10, padding: '14px 20px', color: '#fff' }}>
+            <div style={{ fontSize: 12, opacity: 0.85 }}>商品数</div>
+            <div style={{ fontSize: 22, fontWeight: 700 }}>{Number(summary.product_count).toLocaleString()}</div>
+          </div>
+          <div style={{ flex: 1, background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            borderRadius: 10, padding: '14px 20px', color: '#fff' }}>
+            <div style={{ fontSize: 12, opacity: 0.85 }}>月销量合计</div>
+            <div style={{ fontSize: 22, fontWeight: 700 }}>{Number(summary.total_sales).toLocaleString()}</div>
+          </div>
+          <div style={{ flex: 1, background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            borderRadius: 10, padding: '14px 20px', color: '#fff' }}>
+            <div style={{ fontSize: 12, opacity: 0.85 }}>月营收合计</div>
+            <div style={{ fontSize: 22, fontWeight: 700 }}>${Number(summary.total_revenue).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+          </div>
+          <div style={{ flex: 1, background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+            borderRadius: 10, padding: '14px 20px', color: '#fff' }}>
+            <div style={{ fontSize: 12, opacity: 0.85 }}>平均价格</div>
+            <div style={{ fontSize: 22, fontWeight: 700 }}>${Number(summary.avg_price).toFixed(0)}</div>
+          </div>
+        </div>
+      )}
       <Table rowKey={(r) => `${r.asin}-${r.market}`} loading={isLoading} columns={columns as any}
         dataSource={data?.items ?? []} size="small" scroll={{ x: 1200 }}
         pagination={{ current: page, pageSize: 20, total: data?.total ?? 0,

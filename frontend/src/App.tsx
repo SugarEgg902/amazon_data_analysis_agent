@@ -12,6 +12,8 @@ import Anomalies from './pages/Anomalies'
 import Reports from './pages/Reports'
 import SalesAnalysis from './pages/SalesAnalysis'
 import AmazonSearch from './pages/AmazonSearch'
+import BrandDetail from './pages/BrandDetail'
+import ModelRanking from './pages/ModelRanking'
 
 const qc = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false } },
@@ -35,6 +37,8 @@ export default function App() {
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/sales-analysis" element={<SalesAnalysis />} />
                 <Route path="/search" element={<AmazonSearch />} />
+                <Route path="/brands/:brand" element={<BrandDetail />} />
+                <Route path="/brands/:brand/models/:type" element={<ModelRanking />} />
               </Routes>
             </ErrorBoundary>
           </Layout>

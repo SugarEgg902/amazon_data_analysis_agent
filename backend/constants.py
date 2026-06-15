@@ -31,7 +31,15 @@ def canonical_brand(brand: str) -> str:
 # 避免误收"手机配件"(配件路径含 Cell Phones & Accessories 但叶子是 Holsters 等)。
 PHONE_LEAF_REGEX = (
     "smartphone|cell phone|mobile phone|handys|m[oó]vil|"
-    "celular|cellulari|t[eé]l[eé]phone"
+    "celular|cellulari|t[eé]l[eé]phone|スマートフォン|携帯電話"
+)
+
+TABLET_LEAF_REGEX = (
+    "tablet|tablette|tableta|タブレット"
+)
+
+WATCH_LEAF_REGEX = (
+    "smartwatch|smartwatches|montre|スマートウォッチ"
 )
 
 # 各站点 sub_category 本地化名称 → 统一中文标签
@@ -41,6 +49,8 @@ SUB_CATEGORY_ZH = {
     "cellulari e smartphone": "智能手机",
     "smartphones et téléphones portables débloqués": "智能手机",
     "sim-free & unlocked mobile phones": "智能手机",
+    "renewed mobile phones & smartphones sim-free & unlocked mobile phones": "智能手机",
+    "senior mobile phones": "智能手机",
     "simlockfreie handys": "智能手机",
     "móviles y smartphones libres": "智能手机",
     "celulares y smartphones desbloqueados": "智能手机",
@@ -62,6 +72,10 @@ SUB_CATEGORY_ZH = {
     "tablet-pcs": "平板电脑",
     "タブレット": "平板电脑",
     "computer tablets": "平板电脑",
+    "graphic tablets": "平板电脑",
+    "tabletas gráficas": "平板电脑",
+    "computer graphics tablets": "平板电脑",
+    "portable tvs": "便携电视",
     "monitors": "显示器",
     "computer monitors": "显示器",
     "monitore": "显示器",
@@ -87,6 +101,24 @@ SUB_CATEGORY_ZH = {
     "laptop screen filters": "笔记本屏幕膜",
     "screen filters": "笔记本屏幕膜",
     "deadbolts": "智能门锁",
+    "携帯電話本体": "智能手机",
+    "generadores": "发电机",
+    "generatoren": "发电机",
+    "generatori": "发电机",
+    "generators": "发电机",
+    "groupes éléctrogènes": "发电机",
+    "solar panels": "太阳能板",
+    "paneles solares monocristalinos": "太阳能板",
+    "panneaux solaires monocristallins": "太阳能板",
+    "monokristalline solarmodule": "太阳能板",
+    "太陽光パネル": "太阳能板",
+    "ポータブル電源・蓄電池": "便携电源",
+    "open-ear headphones": "开放式耳机",
+    "open-ear-kopfhörer": "开放式耳机",
+    "outdoor speakers": "户外音响",
+    "desktops": "台式电脑",
+    "traditional laptops": "笔记本电脑",
+    "normale laptops": "笔记本电脑",
 }
 
 
