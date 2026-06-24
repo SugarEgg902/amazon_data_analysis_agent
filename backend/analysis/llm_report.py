@@ -9,7 +9,7 @@ from backend.constants import focus_brand_sql_list
 
 logger = logging.getLogger(__name__)
 
-LLM_BASE_URL = os.getenv("ANALYSIS_LLM_BASE_URL", "http://10.0.0.21:8005/v1")
+LLM_BASE_URL = os.getenv("ANALYSIS_LLM_BASE_URL", "http://10.0.0.22:8005/v1")
 LLM_MODEL = os.getenv("ANALYSIS_LLM_MODEL", "gemma-4-31b-it-fp8")
 
 _FOCUS = focus_brand_sql_list()

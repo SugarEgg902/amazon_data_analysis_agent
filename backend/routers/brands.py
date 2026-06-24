@@ -256,23 +256,39 @@ def get_brand_models(brand: str,
                                      "type": type, "date": None, "models": []})
 
         rows = conn.execute(text("""
-            SELECT model, market, total_sales, total_revenue, sku_count, avg_price
-            FROM daily_model_summary
-            WHERE data_date = :d AND LOWER(brand) = :b AND type = :t
-            ORDER BY total_sales DESC
+            SELECT s.model, s.market, s.total_sales, s.total_revenue, s.sku_count, s.avg_price
+            FROM daily_model_summary s
+            WHERE s.data_date = :d AND LOWER(s.brand) = :b AND s.type = :t
+            ORDER BY s.total_sales DESC
         """), {"d": target, "b": brand_lower, "t": type}).mappings().all()
+
+        # 一次性取该品牌该类型的所有型号参数（brand_models 只有几百行，零负荷）
+        specs_rows = conn.execute(text("""
+            SELECT model, camera, battery, cpu, memory_storage, screen_size, network
+            FROM brand_models WHERE LOWER(brand) = :b AND type = :t
+        """), {"b": brand_lower, "t": type}).mappings().all()
+        specs_map = {r["model"]: dict(r) for r in specs_rows}
 
     # 按型号聚合总量 + 保留各站点明细
     model_map: dict = {}
     for r in rows:
         m = r["model"]
         if m not in model_map:
+            spec = specs_map.get(m, {})
             model_map[m] = {
                 "model": m,
                 "total_sales": 0,
                 "total_revenue": 0,
                 "sku_count": 0,
                 "markets": [],
+                "specs": {
+                    "camera": spec.get("camera"),
+                    "battery": spec.get("battery"),
+                    "cpu": spec.get("cpu"),
+                    "memory_storage": spec.get("memory_storage"),
+                    "screen_size": spec.get("screen_size"),
+                    "network": spec.get("network"),
+                } if spec else None,
             }
         model_map[m]["total_sales"] += int(r["total_sales"] or 0)
         model_map[m]["total_revenue"] += float(r["total_revenue"] or 0)

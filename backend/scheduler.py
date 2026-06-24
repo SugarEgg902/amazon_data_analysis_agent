@@ -51,10 +51,9 @@ def _catch_up_if_needed():
         logger.info("补跑: 今天 %s 有原始数据但未聚合", today)
         run_daily_aggregation()
 
-
+_catch_up_if_needed()  # 启动时立即检查一次,避免错过凌晨3点的调度
 def start_scheduler() -> BackgroundScheduler:
     scheduler = BackgroundScheduler()
-    # 凌晨3点定时聚合
     scheduler.add_job(run_daily_aggregation, "cron", hour=3, minute=0,
                       misfire_grace_time=3600)
     # 每天凌晨3-9点,每小时检查一次是否需要补跑

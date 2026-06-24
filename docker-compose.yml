@@ -7,7 +7,7 @@ services:
       MYSQL_DATABASE: amazon_db
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
-      - ./data/mysql:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
       - ./db/migrations:/docker-entrypoint-initdb.d
     ports:
       - "3306:3306"
@@ -16,17 +16,25 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
 
   fastapi:
     build:
       context: .
       dockerfile: backend/Dockerfile
     ports:
-      - "8000:8000"
+      - "8001:8001"
     depends_on:
       mysql:
         condition: service_healthy
     environment:
       DB_HOST: mysql
+      DB_USER: root
+      DB_PASS: rootroot
       DB_NAME: amazon_db
+      ANALYSIS_LLM_BASE_URL: "http://10.0.0.22:8005/v1"
+      ANALYSIS_LLM_MODEL: "gemma-4-31b-it-fp8"
     restart: unless-stopped
+
+volumes:
+  mysql_data:

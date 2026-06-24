@@ -9,7 +9,11 @@ from backend.scheduler import start_scheduler
 from backend.routers import (meta, overview, brands, products, compare, trends,
                              anomalies, reports, sales_analysis, search)
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 scheduler = None
 
 

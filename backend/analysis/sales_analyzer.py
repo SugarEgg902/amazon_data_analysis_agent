@@ -9,8 +9,8 @@ from backend.database import engine
 
 logger = logging.getLogger(__name__)
 
-SALES_LLM_BASE_URL = os.getenv("SALES_LLM_BASE_URL", "http://10.0.0.21:8000/v1")
-SALES_LLM_MODEL = os.getenv("SALES_LLM_MODEL", "qwen3.6-35b-a3b-fp8")
+SALES_LLM_BASE_URL = os.getenv("SALES_LLM_BASE_URL", "http://10.0.0.22:8005/v1")
+SALES_LLM_MODEL = os.getenv("SALES_LLM_MODEL", "gemma-4-31b-it-fp8")
 
 
 def _classify_columns(df: pd.DataFrame):

@@ -54,8 +54,8 @@ export default function ProductList() {
     { title: 'sub BSR', dataIndex: 'sub_bsr', width: 90 },
     { title: '评分', dataIndex: 'rating', width: 70 },
     { title: '配送', dataIndex: 'fulfillment_method', width: 80 },
-    { title: '增长率', dataIndex: 'growth_rate', width: 80,
-      render: (v: any) => (v == null ? '-' : `${(Number(v) * 100).toFixed(0)}%`) },
+    { title: '月营收', dataIndex: 'monthly_revenue', width: 100,
+      render: (v: any) => (v != null ? `$${Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '-') },
   ]
 
   return (

@@ -39,10 +39,10 @@ async def _auto_refresh_cookie() -> str:
     login_page = "https://www.sellersprite.com/v2/login"
     form_data = {
         "noNeedAutoLogin": "1",
-        "password": "d4d780d98b009bd6fabb9ea0f9acfcee",
-        "email": "luolan123",
+        "password": "",
+        "email": "",
         "autoLogin": "Y",
-        "salt": "a5dc794d8ef3c8bd9d28a278c2ad2499",
+        "salt": "",
     }
     ua = (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
