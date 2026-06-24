@@ -12,6 +12,12 @@
 - **覆盖站点**：US、UK、DE、FR、ES、IT、CA、JP（共 8 个）
 - **重点品类**：三防手机、平板电脑、智能手表、发电机、太阳能板、便携电源等
 
+## 项目截图
+![image1](./example_photo/image1.png)
+![image2](./example_photo/image2.png)
+![image3](./example_photo/image3.png)
+![image4](./example_photo/image4.png)
+![image5](./example_photo/image5.png)
 ## 数据来源
 
 | 工具 | 用途 | 频率 |
