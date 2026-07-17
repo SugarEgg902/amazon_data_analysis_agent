@@ -41,7 +41,7 @@ cp .env.example .env
 
 编辑 `config/config.py`，填入数据库密码、卖家精灵账号，以及下面两节的**钉钉**和 **OSS** 凭据。
 
-> ⚠️ **本仓库是公开的。** `config/config.py` 和 `.env` 已在 `.gitignore` 中，任何密钥都不要提交。注意 `.pyc` 里也会带密钥明文，同样已忽略。
+
 
 ## 启动
 
