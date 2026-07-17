@@ -14,6 +14,23 @@ from backend.database import engine
 logger = logging.getLogger(__name__)
 
 
+def _safe_push(period: str):
+    try:
+        # 惰性导入:推送依赖(requests/matplotlib)缺失时不影响后端启动
+        from backend.analysis.dingtalk_push import push_report
+        result = push_report(period)
+        logger.info("dingtalk push %s: %s", period, result)
+    except Exception:
+        logger.exception("dingtalk push %s failed", period)
+
+
+def _safe_llm(period: str):
+    try:
+        run_llm_analysis(date.today(), period)
+    except Exception:
+        logger.exception("llm_report %s failed", period)
+
+
 def run_daily_aggregation():
     today = date.today()
     for name, fn in (
@@ -59,6 +76,20 @@ def start_scheduler() -> BackgroundScheduler:
     # 每天凌晨3-9点,每小时检查一次是否需要补跑
     scheduler.add_job(_catch_up_if_needed, "cron", hour="3-9", minute=30,
                       misfire_grace_time=3600)
+    # 周报/月报的 LLM 分析:各自独立生成(不能拿日报凑数,口径和结论都不同)。
+    # 排在推送前一小时,给 LLM 留出重试余量;日报的 LLM 在 3 点聚合里已经跑了。
+    scheduler.add_job(lambda: _safe_llm("weekly"), "cron", day_of_week="mon",
+                      hour=8, minute=0, misfire_grace_time=3600)
+    scheduler.add_job(lambda: _safe_llm("monthly"), "cron", day=1,
+                      hour=8, minute=10, misfire_grace_time=3600)
+    # 钉钉推送:每天9点日报;周一9:05周报;每月1号9:10月报
+    # (放在上午推送而非聚合完成后,避免凌晨3点打扰;此时数据已聚合完)
+    scheduler.add_job(lambda: _safe_push("daily"), "cron", hour=9, minute=0,
+                      misfire_grace_time=3600)
+    scheduler.add_job(lambda: _safe_push("weekly"), "cron", day_of_week="mon",
+                      hour=9, minute=5, misfire_grace_time=3600)
+    scheduler.add_job(lambda: _safe_push("monthly"), "cron", day=1,
+                      hour=9, minute=10, misfire_grace_time=3600)
     scheduler.start()
     _catch_up_if_needed()
     return scheduler
