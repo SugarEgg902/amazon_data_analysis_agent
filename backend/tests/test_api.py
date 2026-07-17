@@ -15,8 +15,9 @@ def test_overview_default_and_market(client):
     assert r.status_code == 200
     body = r.json()["data"]
     assert "brands" in body and "category_share" in body
-    # 仅 5 个聚焦品牌,跨站点聚合 -> 每行有 brand 与 markets(复数),无单一 market
-    focus = {"blackview", "ulefone", "cubot", "oukitel", "doogee"}
+    # 仅聚焦品牌,跨站点聚合 -> 每行有 brand 与 markets(复数),无单一 market
+    # overview 返回 canonical 展示名,故这里用展示名小写比对
+    focus = {"oukitel", "ecoflow", "bluetti", "jackery", "vtoman", "anker"}
     for b in body["brands"]:
         assert b["brand"].lower() in focus
         assert "markets" in b
@@ -65,7 +66,7 @@ def test_compare_and_trends(client):
     assert "growth_ranking" in d and "new_products" in d and "category_trends" in d
 
 
-def test_anomalies_detect_then_latest(client):
+def test_anomalies_detect_then_latest(client, cleanup_anomaly_alerts):
     det = client.post("/api/anomalies/detect", json={})
     assert det.status_code == 200
     assert "detected" in det.json()["data"]

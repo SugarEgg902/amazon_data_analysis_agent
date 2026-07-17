@@ -8,13 +8,14 @@ from backend.models.schemas import ApiResponse
 router = APIRouter()
 
 _SORT_COLS = {
-    "monthly_sales": "monthly_sales",
-    "price": "price",
-    "main_bsr": "main_bsr",
-    "sub_bsr": "sub_bsr",
-    "rating": "rating",
-    "growth_rate": "growth_rate",
-    "monthly_revenue": "monthly_revenue",
+    "monthly_sales": "s.monthly_sales",
+    "price": "s.price",
+    "main_bsr": "s.main_bsr",
+    "sub_bsr": "s.sub_bsr",
+    "rating": "s.rating",
+    "growth_rate": "s.growth_rate",
+    "monthly_revenue": "s.monthly_revenue",
+    "launch_date": "m.launch_date",
 }
 
 
@@ -30,7 +31,7 @@ def list_products(
     sort: str = Query(default="monthly_sales"),
     order: str = Query(default="desc", pattern="^(asc|desc)$"),
 ):
-    sort_col = _SORT_COLS.get(sort, "monthly_sales")
+    sort_col = _SORT_COLS.get(sort, "s.monthly_sales")
     order_sql = "DESC" if order == "desc" else "ASC"
     params: dict = {"limit": page_size, "offset": (page - 1) * page_size}
 
@@ -65,7 +66,9 @@ def list_products(
                        MAX(product_title) AS product_title,
                        MAX(main_image) AS main_image,
                        MAX(product_url) AS product_url,
-                       MAX(fulfillment_method) AS fulfillment_method
+                       MAX(fulfillment_method) AS fulfillment_method,
+                       MAX(launch_date) AS launch_date,
+                       MAX(seller_location) AS seller_location
                 FROM amazon WHERE crawl_date = :d
                 GROUP BY asin, market
             ) m ON m.asin = s.asin AND m.market = s.market
@@ -84,9 +87,10 @@ def list_products(
             SELECT s.asin, s.market, s.brand, s.sub_category, s.price,
                    s.monthly_sales, s.monthly_revenue, s.main_bsr, s.sub_bsr,
                    s.rating, s.rating_count, s.gross_margin, s.growth_rate,
-                   m.product_title, m.main_image, m.product_url, m.fulfillment_method
+                   m.product_title, m.main_image, m.product_url, m.fulfillment_method,
+                   m.launch_date, m.seller_location
             {base}
-            ORDER BY s.{sort_col} {order_sql}
+            ORDER BY {sort_col} {order_sql}
             LIMIT :limit OFFSET :offset
         """), params).mappings().all()
 

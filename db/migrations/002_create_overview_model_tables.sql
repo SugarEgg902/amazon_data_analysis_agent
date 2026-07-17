@@ -7,14 +7,14 @@ USE amazon_db;
 -- amazon 原始表索引 (应对数据增长到百万行)
 -- 注意: amazon 表本身由爬虫创建,此处只补索引
 -- ---------------------------------------------------------------------------
-CREATE INDEX IF NOT EXISTS idx_crawl_date_brand ON amazon (crawl_date, brand);
-CREATE INDEX IF NOT EXISTS idx_crawl_date_asin_market ON amazon (crawl_date, asin, market);
-CREATE INDEX IF NOT EXISTS idx_asin ON amazon (asin);
+CREATE INDEX idx_crawl_date_brand ON amazon (crawl_date, brand);
+CREATE INDEX  idx_crawl_date_asin_market ON amazon (crawl_date, asin, market);
+CREATE INDEX  idx_asin ON amazon (asin);
 
 -- ---------------------------------------------------------------------------
 -- 总览日聚合 (仅手机品类, 跨站点按品牌)
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS daily_overview_summary (
+CREATE TABLE  daily_overview_summary (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     data_date           DATE NOT NULL,
     brand               VARCHAR(100) NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS daily_overview_summary (
 -- ---------------------------------------------------------------------------
 -- 品类营收 Top10 (全品类全站点)
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS daily_overview_category (
+CREATE TABLE  daily_overview_category (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     data_date   DATE NOT NULL,
     sub_category VARCHAR(255) NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS daily_overview_category (
 -- ---------------------------------------------------------------------------
 -- 型号日销量聚合 (品牌 × 型号 × 站点)
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS daily_model_summary (
+CREATE TABLE  daily_model_summary (
     id            INT AUTO_INCREMENT PRIMARY KEY,
     data_date     DATE NOT NULL,
     brand         VARCHAR(50) NOT NULL,
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS daily_model_summary (
 -- ---------------------------------------------------------------------------
 -- 型号列表 + 参数
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS brand_models (
+CREATE TABLE  brand_models (
     id             INT AUTO_INCREMENT PRIMARY KEY,
     brand          VARCHAR(50) NOT NULL,
     model          VARCHAR(100) NOT NULL,

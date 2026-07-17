@@ -1,26 +1,59 @@
 启动后端：
 
-  cd /Users/wei/Desktop/amazon && backend/venv/bin/python run.py
+cd /Users/wei/Desktop/amazon && backend/venv/bin/python run.py
 
-  启动前端 dev server：
+启动前端 dev server：
 
-  cd /Users/wei/Desktop/amazon/frontend && npm run dev
+cd /Users/wei/Desktop/amazon/frontend && npm run dev
 
-  手动触发聚合（如需要）：
+手动触发聚合（如需要）：
 
-  cd /Users/wei/Desktop/amazon && backend/venv/bin/python -c "
-  import sys; sys.path.insert(0,'.')
-  from datetime import date
-  from backend.aggregation.product_snapshot import run_product_snapshot
-  from backend.aggregation.brand_summary import run_brand_summary
-  from backend.aggregation.category_summary import run_category_summary
-  from backend.aggregation.overview_summary import run_overview_summary
-  from backend.analysis.llm_report import run_llm_analysis
-  d = date.today()
-  run_product_snapshot(d)
-  run_brand_summary(d)
-  run_category_summary(d)
-  run_overview_summary(d)
-  run_llm_analysis(d)
-  print('done')
-  "
+cd /Users/wei/Desktop/amazon && backend/venv/bin/python -c "
+import sys; sys.path.insert(0,'.')
+from datetime import date
+from backend.aggregation.product_snapshot import run_product_snapshot
+from backend.aggregation.brand_summary import run_brand_summary
+from backend.aggregation.category_summary import run_category_summary
+from backend.aggregation.overview_summary import run_overview_summary
+from backend.analysis.llm_report import run_llm_analysis
+d = date.today()
+run_product_snapshot(d)
+run_brand_summary(d)
+run_category_summary(d)
+run_overview_summary(d)
+run_llm_analysis(d)
+print('done')
+"
+
+远程服务器聚合：
+
+sudo docker exec -it amazon-fastapi-1 python -c "
+import sys; sys.path.insert(0,'.')
+from datetime import date
+from backend.aggregation.product_snapshot import run_product_snapshot
+from backend.aggregation.brand_summary import run_brand_summary
+from backend.aggregation.category_summary import run_category_summary
+from backend.aggregation.overview_summary import run_overview_summary
+from backend.aggregation.model_summary import run_model_summary
+from backend.analysis.llm_report import run_llm_analysis
+d = date(2026, 7, 9)
+run_product_snapshot(d); print('product_snapshot done')
+run_brand_summary(d); print('brand_summary done')
+run_category_summary(d); print('category_summary done')
+run_overview_summary(d); print('overview_summary done')
+run_model_summary(d); print('model_summary done')
+run_llm_analysis(d); print('llm_report done')
+"
+
+检测缺少某个站点的数据
+SELECT DISTINCT t23.market
+FROM table_name t23
+WHERE t23.brand = 'blackview'
+  AND DATE(t23.crawl_date) = '2026-06-23'
+  AND NOT EXISTS (
+      SELECT 1
+      FROM table_name t24
+      WHERE t24.brand = t23.brand
+        AND t24.market = t23.market
+        AND DATE(t24.crawl_date) = '2026-06-24'
+  );

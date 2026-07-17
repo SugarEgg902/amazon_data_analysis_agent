@@ -4,7 +4,7 @@ import { api } from '../api/client'
 
 const { Search } = Input
 
-const columns = [
+const baseColumns = [
   { title: 'ASIN', dataIndex: 'asin', width: 110,
     render: (v: string) => <a href={`https://www.amazon.com/dp/${v}`} target="_blank" rel="noopener noreferrer">{v}</a> },
   { title: '商品图', dataIndex: 'imageUrl', width: 70,
@@ -29,12 +29,20 @@ export default function AmazonSearch() {
   const [loading, setLoading] = useState(false)
   const [items, setItems] = useState<any[]>([])
   const [searched, setSearched] = useState(false)
+  const [page, setPage] = useState(1)
+
+  const columns = [
+    { title: '#', width: 50,
+      render: (_: any, __: any, i: number) => (page - 1) * 20 + i + 1 },
+    ...baseColumns,
+  ]
 
   const onSearch = async (keyword: string) => {
     if (!keyword.trim()) return
     setLoading(true)
     setItems([])
     setSearched(true)
+    setPage(1)
     try {
       const res = await api.get('/sellersprite', { params: { keyword }, timeout: 30000 })
       const raw = res.data?.data
@@ -69,7 +77,7 @@ export default function AmazonSearch() {
         <Card bordered={false} style={{ borderRadius: 14 }}>
           <Table rowKey={(r, i) => r.asin || r.id || String(i)}
             columns={columns as any} dataSource={items}
-            size="small" pagination={{ pageSize: 20 }}
+            size="small" pagination={{ pageSize: 20, current: page, onChange: setPage }}
             scroll={{ x: 1200 }} />
         </Card>
       )}

@@ -16,6 +16,7 @@ export default function ProductList() {
   const [q, setQ] = useState<string>()
   const [date, setDate] = useState<Dayjs | null>(null)
   const [sort, setSort] = useState('monthly_sales')
+  const [order, setOrder] = useState<'desc' | 'asc'>('desc')
 
   const dateStr = date ? date.format('YYYY-MM-DD') : undefined
 
@@ -28,16 +29,24 @@ export default function ProductList() {
     queryFn: () => unwrap<string[]>(api.get('/meta/categories', { params: { market } })),
   })
   const { data, isLoading } = useQuery({
-    queryKey: ['products', market, page, brand, categories, q, dateStr, sort],
+    queryKey: ['products', market, page, brand, categories, q, dateStr, sort, order],
     queryFn: () => unwrap<any>(api.get('/products', {
-      params: { page, page_size: 20, market, brand, category: categories.length ? categories : undefined, q, date: dateStr, sort },
+      params: { page, page_size: 20, market, brand, category: categories.length ? categories : undefined, q, date: dateStr, sort, order },
       paramsSerializer: { indexes: null },
     })),
   })
 
   const summary = data?.summary
 
+  // 服务端排序：给可排序列加 sorter，并用受控 sortOrder 和下拉框保持同步
+  const so = (k: string) => ({
+    sorter: true,
+    sortOrder: sort === k ? (order === 'asc' ? ('ascend' as const) : ('descend' as const)) : null,
+  })
+
   const columns = [
+    { title: '#', width: 55,
+      render: (_: any, __: any, i: number) => (page - 1) * 20 + i + 1 },
     { title: '图片', dataIndex: 'main_image', width: 64,
       render: (u: string) => (u ? <Image src={u} width={48} preview={false} /> : '-') },
     { title: '标题', dataIndex: 'product_title', ellipsis: true },
@@ -45,16 +54,21 @@ export default function ProductList() {
       render: (b: string) => { const t = brandTheme(b)
         return <Tag color={t.color}>{t.name}</Tag> } },
     { title: '站点', dataIndex: 'market', width: 70 },
-    { title: '价格', dataIndex: 'price', width: 90, render: (v: any) => (v ? `$${v}` : '-') },
-    { title: '月销量', dataIndex: 'monthly_sales', width: 90 },
-    { title: '增长率', dataIndex: 'growth_rate', width: 90,
+    { title: '价格', dataIndex: 'price', width: 100, ...so('price'),
+      render: (v: any) => (v ? `$${v}` : '-') },
+    { title: '月销量', dataIndex: 'monthly_sales', width: 100, ...so('monthly_sales') },
+    { title: '增长率', dataIndex: 'growth_rate', width: 100, ...so('growth_rate'),
       render: (v: any) => (v == null ? '-' :
         <Tag color={Number(v) >= 0 ? 'green' : 'red'}>{(Number(v) * 100).toFixed(0)}%</Tag>) },
-    { title: 'main BSR', dataIndex: 'main_bsr', width: 90 },
-    { title: 'sub BSR', dataIndex: 'sub_bsr', width: 90 },
-    { title: '评分', dataIndex: 'rating', width: 70 },
+    { title: 'main BSR', dataIndex: 'main_bsr', width: 105, ...so('main_bsr') },
+    { title: 'sub BSR', dataIndex: 'sub_bsr', width: 100, ...so('sub_bsr') },
+    { title: '评分', dataIndex: 'rating', width: 85, ...so('rating') },
     { title: '配送', dataIndex: 'fulfillment_method', width: 80 },
-    { title: '月营收', dataIndex: 'monthly_revenue', width: 100,
+    { title: '卖家国籍', dataIndex: 'seller_location', width: 95,
+      render: (v: any) => v || '-' },
+    { title: '上架日期', dataIndex: 'launch_date', width: 120, ...so('launch_date'),
+      render: (v: any) => v || '-' },
+    { title: '月营收', dataIndex: 'monthly_revenue', width: 115, ...so('monthly_revenue'),
       render: (v: any) => (v != null ? `$${Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '-') },
   ]
 
@@ -74,13 +88,18 @@ export default function ProductList() {
         <Col><DatePicker placeholder="快照日期" value={date} style={{ width: 150 }}
           onChange={(d) => { setDate(d); setPage(1) }}
           disabledDate={(d) => d && d > dayjs()} /></Col>
-        <Col><Select value={sort} style={{ width: 140 }} onChange={setSort} options={[
+        <Col><Select value={sort} style={{ width: 140 }} onChange={(v) => { setSort(v); setPage(1) }} options={[
           { value: 'monthly_sales', label: '月销量' },
           { value: 'monthly_revenue', label: '月营收' },
           { value: 'price', label: '价格' },
           { value: 'main_bsr', label: 'main BSR' },
           { value: 'rating', label: '评分' },
           { value: 'growth_rate', label: '增长率' },
+          { value: 'launch_date', label: '上架时间' },
+        ]} /></Col>
+        <Col><Select value={order} style={{ width: 90 }} onChange={(v) => { setOrder(v); setPage(1) }} options={[
+          { value: 'desc', label: '降序' },
+          { value: 'asc', label: '升序' },
         ]} /></Col>
       </Row>
       {summary && (
@@ -108,9 +127,16 @@ export default function ProductList() {
         </div>
       )}
       <Table rowKey={(r) => `${r.asin}-${r.market}`} loading={isLoading} columns={columns as any}
-        dataSource={data?.items ?? []} size="small" scroll={{ x: 1200 }}
+        dataSource={data?.items ?? []} size="small" scroll={{ x: 1400 }}
         pagination={{ current: page, pageSize: 20, total: data?.total ?? 0,
           showSizeChanger: false, showTotal: (t) => `共 ${t} 条`, onChange: setPage }}
+        onChange={(_p, _f, sorter: any, extra: any) => {
+          if (extra?.action !== 'sort') return
+          const s = Array.isArray(sorter) ? sorter[0] : sorter
+          if (s?.order) { setSort(s.field as string); setOrder(s.order === 'ascend' ? 'asc' : 'desc') }
+          else { setSort('monthly_sales'); setOrder('desc') }
+          setPage(1)
+        }}
         onRow={(r) => ({ style: { cursor: 'pointer' },
           onClick: () => nav(`/products/${r.asin}?market=${r.market}`) })} />
     </div>

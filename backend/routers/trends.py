@@ -10,7 +10,9 @@ router = APIRouter()
 
 @router.get("/trends", response_model=ApiResponse)
 def get_trends(market: Optional[str] = Query(default=None),
-               date: Optional[str] = Query(default=None)):
+               date: Optional[str] = Query(default=None),
+               new_days: int = Query(default=30, ge=1, le=365,
+                                     description="新品追踪:上架时间在最近 N 天内")):
     with engine.connect() as conn:
         target = date or conn.execute(
             text("SELECT MAX(snapshot_date) FROM product_daily_snapshot")
@@ -19,7 +21,7 @@ def get_trends(market: Optional[str] = Query(default=None),
             return ApiResponse(data={"date": None, "growth_ranking": [],
                                      "new_products": [], "category_trends": []})
 
-        params: dict = {"d": target}
+        params: dict = {"d": target, "nd": new_days}
         sclause = " AND s.market = :m" if market else ""
         if market:
             params["m"] = market
@@ -42,7 +44,7 @@ def get_trends(market: Optional[str] = Query(default=None),
                    MAX(CAST(NULLIF(REGEXP_REPLACE(a.price,'[^0-9.]',''),'') AS DECIMAL(10,2))) AS price
             FROM amazon a
             WHERE a.crawl_date = :d AND a.launch_date IS NOT NULL
-                  AND a.launch_date >= DATE_SUB(:d, INTERVAL 30 DAY) {new_clause}
+                  AND a.launch_date >= DATE_SUB(:d, INTERVAL :nd DAY) {new_clause}
             GROUP BY a.asin, a.market
             ORDER BY launch_date DESC LIMIT 50
         """), params).mappings().all()

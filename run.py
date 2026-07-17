@@ -18,7 +18,7 @@ if __name__ == "__main__":
     import uvicorn
 
     reload = "--reload" in sys.argv
-    port = 8001
+    port = 1332
     for i, a in enumerate(sys.argv):
         if a == "--port" and i + 1 < len(sys.argv):
             port = int(sys.argv[i + 1])
@@ -32,10 +32,14 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "backend.main:app",
+        # 必须绑 0.0.0.0:钉钉消息里的图表是每个查看者的客户端自己去拉
+        # PUBLIC_BASE_URL 的,只绑 127.0.0.1 的话内网设备也拉不到,图会全裂。
         host="0.0.0.0",
         port=port,
         reload=reload,
-        reload_dirs=[os.path.join(REPO_ROOT, "backend")] if reload else None,
+        # 同时监听 backend/ 和 config/,改配置文件也能自动重载
+        reload_dirs=[os.path.join(REPO_ROOT, "backend"),
+                     os.path.join(REPO_ROOT, "config")] if reload else None,
         log_config=log_config,
     )
 

@@ -1,8 +1,12 @@
-import { Table, Tag, Button, Space, Select, Spin, Alert, message } from 'antd'
+import { Table, Tag, Button, Space, Select, Spin, Alert, message, DatePicker, InputNumber } from 'antd'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import dayjs, { Dayjs } from 'dayjs'
 import { api, unwrap } from '../api/client'
 import { useMarket } from '../context/MarketContext'
+
+const { RangePicker } = DatePicker
 
 const TYPE_LABELS: Record<string, string> = {
   sales_amount: '销售额', sales_volume: '销量', price: '价格',
@@ -10,7 +14,7 @@ const TYPE_LABELS: Record<string, string> = {
 }
 
 // 计数类指标(销量/BSR排名)是整数,按四舍五入整数显示;
-// 金额类(销售额/价格)保留两位小数。基线为7天均值,故计数类基线也四舍五入。
+// 金额类(销售额/价格)保留两位小数。基线为所选日期范围的均值,故计数类基线也四舍五入。
 const INTEGER_TYPES = new Set(['sales_volume', 'main_bsr', 'sub_bsr'])
 
 function fmtValue(type: string, v: any): string {
@@ -20,9 +24,14 @@ function fmtValue(type: string, v: any): string {
 }
 
 export default function Anomalies() {
+  const nav = useNavigate()
   const { market } = useMarket()
   const qc = useQueryClient()
   const [type, setType] = useState<string>()
+  // 基线日期范围:默认最近 7 天(不含今天快照当天由后端保证)
+  const [range, setRange] = useState<[Dayjs, Dayjs]>([dayjs().subtract(7, 'day'), dayjs()])
+  // 超过基线均值多少比例算异常(%)
+  const [threshold, setThreshold] = useState<number>(30)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['anomalies', market, type],
@@ -30,7 +39,15 @@ export default function Anomalies() {
   })
 
   const detect = useMutation({
-    mutationFn: () => api.post('/anomalies/detect', {}),
+    mutationFn: () => {
+      const t = (threshold || 30) / 100
+      return api.post('/anomalies/detect', {
+        sales_amount_threshold: t, sales_volume_threshold: t, price_threshold: t,
+        main_bsr_threshold: t, sub_bsr_threshold: t,
+        start_date: range?.[0]?.format('YYYY-MM-DD'),
+        end_date: range?.[1]?.format('YYYY-MM-DD'),
+      })
+    },
     onSuccess: (r) => {
       message.success(`检测完成，发现 ${r.data?.data?.detected ?? 0} 条异常`)
       qc.invalidateQueries({ queryKey: ['anomalies'] })
@@ -67,7 +84,14 @@ export default function Anomalies() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }}>
+      <Space style={{ marginBottom: 16 }} wrap>
+        <span>基线日期</span>
+        <RangePicker value={range} allowClear={false}
+          onChange={(v) => v && v[0] && v[1] && setRange([v[0], v[1]])}
+          disabledDate={(d) => d && d > dayjs()} />
+        <span>阈值</span>
+        <InputNumber min={1} max={500} value={threshold} addonAfter="%"
+          style={{ width: 110 }} onChange={(v) => setThreshold(v ?? 30)} />
         <Button type="primary" loading={detect.isPending} onClick={() => detect.mutate()}>
           运行异常检测
         </Button>
@@ -77,7 +101,9 @@ export default function Anomalies() {
         {data?.detected_at && <span style={{ color: '#999' }}>批次: {data.detected_at}</span>}
       </Space>
       <Table rowKey="id" columns={columns as any} dataSource={data?.items ?? []}
-        size="small" pagination={{ pageSize: 20 }} />
+        size="small" pagination={{ pageSize: 20 }}
+        onRow={(r: any) => ({ style: { cursor: 'pointer' },
+          onClick: () => nav(`/products/${r.asin}?market=${r.market}`) })} />
     </div>
   )
 }

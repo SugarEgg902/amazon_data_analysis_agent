@@ -1,15 +1,15 @@
 # backend/routers/search.py
 import asyncio
-import importlib
 import json
 import logging
-import os
-import re
-import sys
 import httpx
 from fastapi import APIRouter, Query, HTTPException
 from backend.models.schemas import ApiResponse
 from backend.routers.amazon import scrape_amazon_products
+from config.config import (
+    SELLERSPRITE_COOKIE, SELLERSPRITE_EMAIL,
+    SELLERSPRITE_PASSWORD, SELLERSPRITE_SALT,
+)
 
 router = APIRouter()
 
@@ -19,30 +19,28 @@ logger = logging.getLogger(__name__)
 _search_lock = asyncio.Semaphore(1)
 
 _SELLERSPRITE_URL = "https://www.sellersprite.com/v3/api/competing-lookup"
-_LOGIN_URL = "https://www.sellersprite.com/v2/login"
-_DASHBOARD_URL = "https://www.sellersprite.com/v2/welcome"
-_CONFIG_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "..", "config", "config.py"
-)
+
+# 当前 cookie(初始从环境变量读,刷新时更新此内存变量)
+_current_cookie = SELLERSPRITE_COOKIE
 
 
 def _get_cookie() -> str:
-    from config.config import SELLERSPRITE_COOKIE
-    return SELLERSPRITE_COOKIE
+    return _current_cookie
 
 
 async def _auto_refresh_cookie() -> str:
-    """通过 HTTP POST 登录卖家精灵,获取新 cookie 并写回 config.py。"""
+    """通过 HTTP POST 登录卖家精灵,获取新 cookie 并更新内存变量。"""
+    global _current_cookie
     logger.info("正在自动刷新卖家精灵 cookie ...")
 
     login_url = "https://www.sellersprite.com/w/user/signin"
     login_page = "https://www.sellersprite.com/v2/login"
     form_data = {
         "noNeedAutoLogin": "1",
-        "password": "",
-        "email": "",
+        "password": SELLERSPRITE_PASSWORD,
+        "email": SELLERSPRITE_EMAIL,
         "autoLogin": "Y",
-        "salt": "",
+        "salt": SELLERSPRITE_SALT,
     }
     ua = (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -66,23 +64,8 @@ async def _auto_refresh_cookie() -> str:
         raise RuntimeError(f"登录失败, cookies={list(all_cookies.keys())}")
 
     cookie_str = "; ".join(f"{k}={v}" for k, v in all_cookies.items())
-    logger.info(f"✓ 登录成功, 获取到 {len(all_cookies)} 个 cookie")
-
-    # 写回 config.py
-    with open(_CONFIG_PATH, "r") as f:
-        content = f.read()
-    escaped = cookie_str.replace("\\", "\\\\").replace("'", "\\'")
-    new_content = re.sub(
-        r"SELLERSPRITE_COOKIE\s*=\s*(?:\([\s\S]*?\)|\"[^\"]*\"|'[^']*')",
-        f"SELLERSPRITE_COOKIE = '{escaped}'",
-        content,
-    )
-    with open(_CONFIG_PATH, "w") as f:
-        f.write(new_content)
-
-    import config.config as cfg
-    importlib.reload(cfg)
-    logger.info("cookie 已更新到 config/config.py")
+    _current_cookie = cookie_str  # 更新内存变量(容器重启后丢失,但会自动重新登录)
+    logger.info(f"✓ 登录成功, 获取到 {len(all_cookies)} 个 cookie, 已更新内存")
 
     return cookie_str
 

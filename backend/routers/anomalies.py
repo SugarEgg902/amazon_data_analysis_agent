@@ -16,6 +16,9 @@ class DetectRequest(BaseModel):
     price_threshold: float = 0.20
     main_bsr_threshold: float = 0.30
     sub_bsr_threshold: float = 0.30
+    # 基线日期范围(YYYY-MM-DD)。不传则默认最新快照前 7 天
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
 
 
 @router.post("/anomalies/detect", response_model=ApiResponse)
@@ -23,6 +26,7 @@ def detect(req: DetectRequest = DetectRequest()):
     result = run_anomaly_detection(
         req.sales_amount_threshold, req.sales_volume_threshold,
         req.price_threshold, req.main_bsr_threshold, req.sub_bsr_threshold,
+        start_date=req.start_date, end_date=req.end_date,
     )
     return ApiResponse(data=result)
 

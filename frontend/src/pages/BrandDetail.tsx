@@ -28,11 +28,11 @@ export default function BrandDetail() {
   const marketDist = data.market_distribution || []
   const categoryCards = data.category_cards || []
 
-  const bucketOrder = ['手机', '平板', '手表', '其他']
+  const bucketOrder = ['储能', '光伏', '配件', '其他']
   const bucketStyles: Record<string, { bg: string; accent: string }> = {
-    '手机': { bg: '#f0f4ff', accent: '#4a6cf7' },
-    '平板': { bg: '#f0faf4', accent: '#3da67a' },
-    '手表': { bg: '#fdf4f0', accent: '#d4764e' },
+    '储能': { bg: '#e6f4ff', accent: '#1677ff' },
+    '光伏': { bg: '#fff7e6', accent: '#fa8c16' },
+    '配件': { bg: '#f0faf4', accent: '#3da67a' },
     '其他': { bg: '#f5f3ff', accent: '#7c6bbd' },
   }
   const sortedCards = bucketOrder
@@ -127,7 +127,8 @@ export default function BrandDetail() {
         <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
           {sortedCards.map((c: any) => {
             const bs = bucketStyles[c.bucket] || bucketStyles['其他']
-            const clickable = c.bucket === '手机' || c.bucket === '平板'
+            // 储能品牌暂无型号清单,4 张品类卡片均不可点击(不跳转型号排名页)
+            const clickable = false
             return (
               <div key={c.bucket}
                 onClick={clickable ? () => navigate(`/brands/${brand}/models/${c.bucket}`) : undefined}
@@ -188,9 +189,9 @@ export default function BrandDetail() {
         )}
       </Card>
 
-      {/* Top 10 手机商品 */}
+      {/* Top 10 储能商品 */}
       <Card
-        title={<span style={{ color: '#fff', fontWeight: 700 }}>{t.name} · 手机品类销量 Top 10</span>}
+        title={<span style={{ color: '#fff', fontWeight: 700 }}>{t.name} · 储能品类销量 Top 10</span>}
         bordered={false}
         styles={{ header: { background: t.gradient, border: 'none' }, body: { padding: 12 } }}
         style={{ borderRadius: 14, overflow: 'hidden' }}
@@ -200,7 +201,7 @@ export default function BrandDetail() {
             columns={columns as any} dataSource={data.top_products}
             pagination={false} size="small" />
         ) : (
-          <Empty description="暂无手机品类商品" />
+          <Empty description="暂无储能品类商品" />
         )}
       </Card>
     </div>

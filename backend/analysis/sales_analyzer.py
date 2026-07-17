@@ -1,16 +1,14 @@
 # backend/analysis/sales_analyzer.py
-import os
 import io
 import logging
 import pandas as pd
 from sqlalchemy import text
 from openai import OpenAI
 from backend.database import engine
+from config.config import LLM_BASE_URL as SALES_LLM_BASE_URL
+from config.config import LLM_MODEL as SALES_LLM_MODEL
 
 logger = logging.getLogger(__name__)
-
-SALES_LLM_BASE_URL = os.getenv("SALES_LLM_BASE_URL", "http://10.0.0.22:8005/v1")
-SALES_LLM_MODEL = os.getenv("SALES_LLM_MODEL", "gemma-4-31b-it-fp8")
 
 
 def _classify_columns(df: pd.DataFrame):

@@ -5,15 +5,16 @@ from typing import Optional
 from backend.database import engine
 from backend.models.schemas import ApiResponse
 from backend.constants import (
-    focus_brand_sql_list, canonical_brand, FOCUS_BRANDS,
-    PHONE_LEAF_REGEX, TABLET_LEAF_REGEX, WATCH_LEAF_REGEX,
-    fx_case_sql, normalize_sub_category,
+    focus_brand_sql_list, canonical_brand, FOCUS_BRANDS, resolve_focus_brand,
+    STORAGE_LEAF_REGEX, SOLAR_LEAF_REGEX, ACCESSORY_LEAF_REGEX,
+    fx_case_sql, normalize_sub_category, corrected_brand_sql,
 )
 
 router = APIRouter()
 
 _FOCUS = focus_brand_sql_list()
 _FX = fx_case_sql("market")
+_CB = corrected_brand_sql()  # OUKITEL 官方储能商品的店铺名归回 oukitel(仅影响标题含 OUKITEL 且储能类目的行)
 
 
 @router.get("/brands/trend", response_model=ApiResponse)
@@ -49,9 +50,9 @@ def get_brands_trend(days: int = Query(default=30, ge=1, le=365),
 
 @router.get("/brands/{brand}/detail", response_model=ApiResponse)
 def get_brand_detail(brand: str, date: Optional[str] = Query(default=None)):
-    """品牌详情:概览指标 + 趋势 + 站点分布 + 全品类营收占比 + 该品牌手机Top10商品。"""
-    brand_lower = brand.lower()
-    if brand_lower not in FOCUS_BRANDS:
+    """品牌详情:概览指标 + 趋势 + 站点分布 + 全品类营收占比 + 该品牌储能Top10商品。"""
+    brand_lower = resolve_focus_brand(brand)
+    if brand_lower is None:
         raise HTTPException(status_code=404, detail=f"unknown brand: {brand}")
 
     with engine.connect() as conn:
@@ -69,7 +70,7 @@ def get_brand_detail(brand: str, date: Optional[str] = Query(default=None)):
                 "top_products": [],
             })
 
-        # 1. 品牌概览指标(仅三防手机品类,从原始数据实时聚合)
+        # 1. 品牌概览指标(仅储能品类,从原始数据实时聚合)
         summary_row = conn.execute(text(f"""
             WITH per_asin AS (
                 SELECT COALESCE(NULLIF(parent_asin,''), asin) AS pkey, market, asin,
@@ -79,7 +80,7 @@ def get_brand_detail(brand: str, date: Optional[str] = Query(default=None)):
                        MAX(CAST(NULLIF(rating,'') AS DECIMAL(3,2))) AS rating,
                        MAX(fulfillment_method = 'FBA') AS is_fba
                 FROM amazon
-                WHERE crawl_date = :d AND LOWER(brand) = :b
+                WHERE crawl_date = :d AND {_CB} = :b
                   AND LOWER(SUBSTRING_INDEX(category_path, ':', -1)) COLLATE utf8mb4_unicode_ci REGEXP :re
                 GROUP BY pkey, market, asin
             ),
@@ -97,10 +98,10 @@ def get_brand_detail(brand: str, date: Optional[str] = Query(default=None)):
                    AVG(is_fba) AS fba_ratio,
                    GROUP_CONCAT(DISTINCT market ORDER BY market) AS markets
             FROM family
-        """), {"d": target, "b": brand_lower, "re": PHONE_LEAF_REGEX}).mappings().first()
+        """), {"d": target, "b": brand_lower, "re": STORAGE_LEAF_REGEX}).mappings().first()
         summary = dict(summary_row) if summary_row and summary_row["product_count"] else None
 
-        # 1.5 品类分桶卡片(手机/平板/手表/其他)
+        # 1.5 品类分桶卡片(储能/光伏/配件/其他)
         bucket_rows = conn.execute(text(f"""
             WITH per_asin AS (
                 SELECT COALESCE(NULLIF(parent_asin,''), asin) AS pkey, market, asin,
@@ -109,7 +110,7 @@ def get_brand_detail(brand: str, date: Optional[str] = Query(default=None)):
                        MAX(CAST(NULLIF(REGEXP_REPLACE(monthly_revenue,'[^0-9.]',''),'') AS DECIMAL(18,2))) AS rev,
                        MAX(CAST(NULLIF(REGEXP_REPLACE(price,'[^0-9.]',''),'') AS DECIMAL(10,2))) AS price
                 FROM amazon
-                WHERE crawl_date = :d AND LOWER(brand) = :b
+                WHERE crawl_date = :d AND {_CB} = :b
                 GROUP BY pkey, market, asin, leaf
             ),
             family AS (
@@ -120,9 +121,9 @@ def get_brand_detail(brand: str, date: Optional[str] = Query(default=None)):
             bucketed AS (
                 SELECT
                     CASE
-                        WHEN leaf COLLATE utf8mb4_unicode_ci REGEXP :phone_re THEN '手机'
-                        WHEN leaf COLLATE utf8mb4_unicode_ci REGEXP :tablet_re THEN '平板'
-                        WHEN leaf COLLATE utf8mb4_unicode_ci REGEXP :watch_re THEN '手表'
+                        WHEN leaf COLLATE utf8mb4_unicode_ci REGEXP :storage_re THEN '储能'
+                        WHEN leaf COLLATE utf8mb4_unicode_ci REGEXP :solar_re THEN '光伏'
+                        WHEN leaf COLLATE utf8mb4_unicode_ci REGEXP :accessory_re THEN '配件'
                         ELSE '其他'
                     END AS bucket,
                     sales, rev, price, market
@@ -137,9 +138,9 @@ def get_brand_detail(brand: str, date: Optional[str] = Query(default=None)):
             GROUP BY bucket
             ORDER BY total_revenue DESC
         """), {"d": target, "b": brand_lower,
-               "phone_re": PHONE_LEAF_REGEX,
-               "tablet_re": TABLET_LEAF_REGEX,
-               "watch_re": WATCH_LEAF_REGEX}).mappings().all()
+               "storage_re": STORAGE_LEAF_REGEX,
+               "solar_re": SOLAR_LEAF_REGEX,
+               "accessory_re": ACCESSORY_LEAF_REGEX}).mappings().all()
         category_cards = [dict(r) for r in bucket_rows]
 
         # 2. 30 天月销量趋势(daily_brand_summary,按日聚合)
@@ -171,7 +172,7 @@ def get_brand_detail(brand: str, date: Optional[str] = Query(default=None)):
                        MAX(sub_category) AS sub_category,
                        MAX(CAST(NULLIF(REGEXP_REPLACE(monthly_revenue,'[^0-9.]',''),'') AS DECIMAL(18,2))) AS rev
                 FROM amazon
-                WHERE crawl_date = :d AND LOWER(brand) = :b
+                WHERE crawl_date = :d AND {_CB} = :b
                 GROUP BY pkey, market, asin
             ),
             family AS (
@@ -193,10 +194,11 @@ def get_brand_detail(brand: str, date: Optional[str] = Query(default=None)):
             for k, v in sorted(merged.items(), key=lambda x: -x[1])[:10]
         ]
 
-        # 5. 该品牌手机Top10商品(价格和营收折算USD)
+        # 5. 该品牌储能Top10商品(价格和营收折算USD)
         top = conn.execute(text(f"""
             WITH per_asin AS (
-                SELECT COALESCE(NULLIF(parent_asin,''), asin) AS pkey, market, asin, brand,
+                SELECT COALESCE(NULLIF(parent_asin,''), asin) AS pkey, market, asin,
+                       MAX({_CB}) AS brand,
                        MAX(product_title) AS product_title,
                        MAX(main_image) AS main_image,
                        MAX(product_url) AS product_url,
@@ -204,9 +206,9 @@ def get_brand_detail(brand: str, date: Optional[str] = Query(default=None)):
                        MAX(CAST(NULLIF(REGEXP_REPLACE(monthly_revenue,'[^0-9.]',''),'') AS DECIMAL(18,2))) AS rev,
                        MAX(CAST(NULLIF(REGEXP_REPLACE(price,'[^0-9.]',''),'') AS DECIMAL(10,2))) AS price
                 FROM amazon
-                WHERE crawl_date = :d AND LOWER(brand) = :b
+                WHERE crawl_date = :d AND {_CB} = :b
                   AND LOWER(SUBSTRING_INDEX(category_path, ':', -1)) COLLATE utf8mb4_unicode_ci REGEXP :re
-                GROUP BY pkey, market, asin, brand
+                GROUP BY pkey, market, asin
             ),
             family AS (
                 SELECT pkey, market, MAX(brand) AS brand,
@@ -224,7 +226,7 @@ def get_brand_detail(brand: str, date: Optional[str] = Query(default=None)):
             FROM family
             WHERE sales IS NOT NULL
             ORDER BY sales DESC LIMIT 10
-        """), {"d": target, "b": brand_lower, "re": PHONE_LEAF_REGEX}).mappings().all()
+        """), {"d": target, "b": brand_lower, "re": STORAGE_LEAF_REGEX}).mappings().all()
 
     return ApiResponse(data={
         "brand": canonical_brand(brand_lower),
@@ -240,11 +242,11 @@ def get_brand_detail(brand: str, date: Optional[str] = Query(default=None)):
 
 @router.get("/brands/{brand}/models", response_model=ApiResponse)
 def get_brand_models(brand: str,
-                     type: str = Query(default="手机"),
+                     type: str = Query(default="储能"),
                      date: Optional[str] = Query(default=None)):
     """型号销量排名(从预聚合表读取)。"""
-    brand_lower = brand.lower()
-    if brand_lower not in FOCUS_BRANDS:
+    brand_lower = resolve_focus_brand(brand)
+    if brand_lower is None:
         raise HTTPException(status_code=404, detail=f"unknown brand: {brand}")
 
     with engine.connect() as conn:

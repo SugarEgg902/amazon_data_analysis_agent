@@ -2,9 +2,10 @@
 from datetime import date
 from sqlalchemy import text
 from backend.database import engine
-from backend.constants import fx_case_sql
+from backend.constants import fx_case_sql, corrected_brand_sql
 
 _FX = fx_case_sql("market")
+_CB = corrected_brand_sql()  # OUKITEL 官方储能商品的店铺名归回 oukitel
 
 # 两级去重:
 #  1. 按 (asin, market) 折叠原始重复行 -> 每变体一行
@@ -30,7 +31,8 @@ _SQL = text(f"""
             AVG(margin_c) AS margin,
             MAX(is_fba) AS is_fba
         FROM (
-            SELECT COALESCE(NULLIF(parent_asin,''), asin) AS pkey, market, brand,
+            SELECT COALESCE(NULLIF(parent_asin,''), asin) AS pkey, market,
+                MAX({_CB}) AS brand,
                 MAX(CAST(NULLIF(REGEXP_REPLACE(monthly_revenue,'[^0-9.]',''),'') AS DECIMAL(18,2))) AS rev_c,
                 MAX(CAST(NULLIF(REGEXP_REPLACE(monthly_sales,'[^0-9.]',''),'') AS UNSIGNED)) AS sales_c,
                 MAX(CAST(NULLIF(REGEXP_REPLACE(price,'[^0-9.]',''),'') AS DECIMAL(10,2))) AS price_c,
@@ -40,7 +42,7 @@ _SQL = text(f"""
                 MAX(fulfillment_method = 'FBA') AS is_fba
             FROM amazon
             WHERE crawl_date = :d AND brand IS NOT NULL AND market IS NOT NULL
-            GROUP BY pkey, market, brand, asin
+            GROUP BY pkey, market, asin
         ) per_asin
         GROUP BY pkey, market, brand
     ) family

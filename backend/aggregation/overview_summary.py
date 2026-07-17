@@ -2,15 +2,19 @@
 from datetime import date
 from sqlalchemy import text
 from backend.database import engine
-from backend.constants import focus_brand_sql_list, PHONE_LEAF_REGEX, fx_case_sql, normalize_sub_category
+from backend.constants import (
+    focus_brand_sql_list, STORAGE_LEAF_REGEX, fx_case_sql,
+    normalize_sub_category, corrected_brand_sql,
+)
 
 _FOCUS = focus_brand_sql_list()
 _FX = fx_case_sql("market")
+_CB = corrected_brand_sql()  # 把 OUKITEL 官方储能商品从店铺名(如 Solstark/OKITECH)拉回 oukitel
 
 # 变体聚合规则(两级粒度):
 #  - 销量/营收是父体(listing)级,每个 (parent,market) family 只计一次(MAX)
 #  - 价格/评分等是变体级,family 内取均值
-#  - 手机品类:匹配 category_path 叶子段
+#  - 储能品类:匹配 category_path 叶子段(仅储能口径,光伏/配件不计入 Overview headline)
 #  - 金额:折算 USD
 _SQL = text(f"""
 INSERT INTO daily_overview_summary
@@ -18,7 +22,8 @@ INSERT INTO daily_overview_summary
      total_monthly_sales, avg_price, avg_rating, avg_growth_rate,
      avg_gross_margin, fba_ratio)
 WITH per_asin AS (
-    SELECT COALESCE(NULLIF(parent_asin,''), asin) AS pkey, market, brand, asin,
+    SELECT COALESCE(NULLIF(parent_asin,''), asin) AS pkey, market,
+           MAX({_CB}) AS brand, asin,
            MAX(CAST(NULLIF(REGEXP_REPLACE(monthly_sales,'[^0-9.]',''),'') AS UNSIGNED)) AS sales,
            MAX(CAST(NULLIF(REGEXP_REPLACE(monthly_revenue,'[^0-9.]',''),'') AS DECIMAL(18,2))) AS rev,
            MAX(CAST(NULLIF(REGEXP_REPLACE(price,'[^0-9.]',''),'') AS DECIMAL(10,2))) AS price,
@@ -29,8 +34,8 @@ WITH per_asin AS (
     FROM amazon
     WHERE crawl_date = :d
       AND LOWER(SUBSTRING_INDEX(category_path, ':', -1)) COLLATE utf8mb4_unicode_ci REGEXP :re
-      AND LOWER(brand) IN ({_FOCUS})
-    GROUP BY pkey, market, brand, asin
+      AND {_CB} IN ({_FOCUS})
+    GROUP BY pkey, market, asin
 ),
 family AS (
     SELECT pkey, market, brand,
@@ -67,13 +72,14 @@ ON DUPLICATE KEY UPDATE
 # 不限手机,统计所有品类的营收分布
 _CAT_QUERY = text(f"""
 WITH per_asin AS (
-    SELECT COALESCE(NULLIF(parent_asin,''), asin) AS pkey, market, brand, asin,
+    SELECT COALESCE(NULLIF(parent_asin,''), asin) AS pkey, market,
+           MAX({_CB}) AS brand, asin,
            MAX(sub_category) AS sub_category,
            MAX(CAST(NULLIF(REGEXP_REPLACE(monthly_revenue,'[^0-9.]',''),'') AS DECIMAL(18,2))) AS rev
     FROM amazon
     WHERE crawl_date = :d
-      AND LOWER(brand) IN ({_FOCUS})
-    GROUP BY pkey, market, brand, asin
+      AND {_CB} IN ({_FOCUS})
+    GROUP BY pkey, market, asin
 ),
 family AS (
     SELECT pkey, market, brand, MAX(sub_category) AS sub_category, MAX(rev) AS rev
@@ -89,7 +95,7 @@ ORDER BY revenue DESC
 
 def run_overview_summary(target_date: date) -> None:
     with engine.begin() as conn:
-        conn.execute(_SQL, {"d": target_date, "re": PHONE_LEAF_REGEX})
+        conn.execute(_SQL, {"d": target_date, "re": STORAGE_LEAF_REGEX})
 
         # 品类营收:全品类全站点,Python 侧归一中文标签后按标签合并写入
         rows = conn.execute(_CAT_QUERY, {"d": target_date}).mappings().all()
