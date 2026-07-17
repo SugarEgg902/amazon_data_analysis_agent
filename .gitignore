@@ -1,0 +1,25 @@
+# 本地配置:含钉钉密钥/卖家精灵账号/OSS AccessKey/DB 密码,绝不能进仓库。
+# 新环境请复制 config/config.example.py 为 config/config.py 后填写。
+config/config.py
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# 虚拟环境
+venv/
+backend/venv/
+.venv/
+
+# 前端
+node_modules/
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+
+# 运行时产物:图表 PNG 由每次推送重新渲染,不必入库
+backend/static/report_charts/
+
+# macOS
+.DS_Store
