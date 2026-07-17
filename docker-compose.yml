@@ -29,8 +29,8 @@ services:
         condition: service_healthy
     environment:
       DB_HOST: mysql
-      DB_USER: root
-      DB_PASS: rootroot
+      DB_USER: 
+      DB_PASS: 
       DB_NAME: amazon_db
       ANALYSIS_LLM_BASE_URL: "http://10.0.0.22:8005/v1"
       ANALYSIS_LLM_MODEL: "gemma-4-31b-it-fp8"
